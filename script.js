@@ -1,77 +1,268 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const hamburger = document.getElementById("hamburger");
-    const navLinks = document.getElementById("nav-links");
-  
-    hamburger.addEventListener("click", function () {
-        navLinks.classList.toggle("active");
-  
-        // Toggle the icon between ☰ and ✖
-        if (navLinks.classList.contains("active")) {
-            hamburger.textContent = "✖"; // Close icon
-        } else {
-            hamburger.textContent = "☰"; // Hamburger icon
-        }
-    });
-  });
+import { api } from './js/api.js';
 
-function searchCar() {
-    let query = document.getElementById("search").value.toLowerCase();
-    let cars = document.querySelectorAll(".car-card");
-    cars.forEach(car => {
-        let name = car.querySelector("h3").textContent.toLowerCase();
-        if (name.includes(query)) {
-            car.style.display = "block";
-        } else {
-            car.style.display = "none";
-        }
-    });
-    document.getElementById("cars").scrollIntoView({ behavior: "smooth" });
+let isSearching = false;
+let carsLoaded = false;
+
+// Show error message
+function showError(elementId, message) {
+    const errorDiv = document.getElementById(elementId);
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
 }
 
-// Add event listener for Enter key press on the search input
-document.getElementById("search").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
-        event.preventDefault(); // Prevent form submission (if inside a form)
-        searchCar();
+// Show success message
+function showSuccess(elementId, message) {
+    const successDiv = document.getElementById(elementId);
+    if (successDiv) {
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
     }
-});
+}
 
+// Handle Login
+async function handleLogin(event) {
+    event.preventDefault();
+    const form = event.target;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+
+    // Clear previous messages
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('loginSuccess').style.display = 'none';
+
+    if (!email || !password) {
+        showError('loginError', 'Please fill in all fields.');
+        return;
+    }
+
+    try {
+        const response = await api.auth.login({
+            email: email,
+            password: password
+        });
+
+        if (response.token) {
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+            showSuccess('loginSuccess', 'Login successful! Redirecting...');
+            setTimeout(() => {
+                window.location.href = '/index.html';
+            }, 1500);
+        } else {
+            showError('loginError', 'Login failed. Please try again.');
+        }
+    } catch (err) {
+        console.error('Login error:', err);
+        showError('loginError', err.message || 'Login failed. Please check your credentials.');
+    }
+}
+
+// Handle Registration
+async function handleRegistration(event) {
+    event.preventDefault();
+    const form = event.target;
+    const name = form.name.value.trim();
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    const confirmPassword = form.confirmPassword.value;
+
+    // Clear previous messages
+    document.getElementById('registerError').style.display = 'none';
+    document.getElementById('registerSuccess').style.display = 'none';
+
+    if (!name || !email || !password || !confirmPassword) {
+        showError('registerError', 'Please fill in all fields.');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showError('registerError', 'Passwords do not match.');
+        return;
+    }
+
+    if (password.length < 6) {
+        showError('registerError', 'Password must be at least 6 characters long.');
+        return;
+    }
+
+    try {
+        const response = await api.auth.register({
+            name: name,
+            email: email,
+            password: password
+        });
+
+        if (response.user) {
+            showSuccess('registerSuccess', 'Registration successful! Redirecting to login...');
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+        } else {
+            showError('registerError', 'Registration failed. Please try again.');
+        }
+    } catch (err) {
+        console.error('Registration error:', err);
+        showError('registerError', err.message || 'Registration failed. Please try again.');
+    }
+}
+
+// Scroll to services
 function scrollToServices() {
-    document.getElementById("services").scrollIntoView({ behavior: "smooth" });
-}
-
-// Simulated Car Data (In a real project, this would come from a database)
-const cars = {
-    "toyota-corolla": {
-        name: "Toyota Corolla",
-        price: "$50 per day",
-        description: "A comfortable and fuel-efficient sedan.",
-        images: ["corolla-front.jpg", "corolla-back.jpg", "corolla-side.jpg", "corolla-interior.jpg"]
-    },
-    "nissan-xtrail": {
-        name: "Nissan X-Trail",
-        price: "$70 per day",
-        description: "A spacious SUV perfect for long trips.",
-        images: ["xtrail-front.jpg", "xtrail-back.jpg", "xtrail-side.jpg", "xtrail-interior.jpg"]
-    }
-};
-
-// Function to Load Car Details
-function loadCarDetails() {
-    const params = new URLSearchParams(window.location.search);
-    const carId = params.get("car");
-
-    if (carId && cars[carId]) {
-        document.getElementById("car-title").textContent = cars[carId].name;
-        document.getElementById("car-price").textContent = cars[carId].price;
-        document.getElementById("car-description").textContent = cars[carId].description;
-
-        // Load Images
-        document.getElementById("car-img-1").src = "images/" + cars[carId].images[0];
-        document.getElementById("car-img-2").src = "images/" + cars[carId].images[1];
-        document.getElementById("car-img-3").src = "images/" + cars[carId].images[2];
-        document.getElementById("car-img-4").src = "images/" + cars[carId].images[3];
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+        servicesSection.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
+// Load cars from API
+async function loadCars() {
+    if (carsLoaded) return;
 
+    const carList = document.querySelector('.car-list');
+    const loading = document.getElementById('loading');
+
+    if (!carList) return;
+
+    try {
+        carsLoaded = true;
+        if (loading) loading.style.display = 'block';
+
+        const cars = await api.cars.getAll();
+        if (loading) loading.style.display = 'none';
+
+        if (cars.length === 0) {
+            carList.innerHTML = '<p>No cars available.</p>';
+            return;
+        }
+
+        carList.innerHTML = cars.map(car => `
+            <div class="car-card">
+                <img src="${car.imageUrl || car.imagePath}" 
+                     alt="${car.title}" 
+                     onerror="this.src='./assets/vehicle-images/toyota-vitz/front.jpg';">
+                <h3>${car.title}</h3>
+                <p>KES ${car.pricePerDay}/day</p>
+                <p class="car-description">${car.description}</p>
+                <button class="book-btn" data-car-id="${car.id}" 
+                        ${!car.available ? 'disabled' : ''}>
+                  ${car.available ? 'Book Now' : 'Not Available'}
+                </button>
+            </div>
+        `).join('');
+
+        // Add click handlers to book buttons
+        document.querySelectorAll('.book-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!localStorage.getItem('token')) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                window.location.href = `request-quote-page.html?carId=${btn.dataset.carId}`;
+            });
+        });
+
+    } catch (err) {
+        console.error('Failed to load cars:', err);
+        if (loading) loading.style.display = 'none';
+        carList.innerHTML = '<p>Failed to load cars. Please try again later.</p>';
+        carsLoaded = false;
+    }
+}
+
+// Search cars
+async function searchCar() {
+    if (isSearching) return;
+
+    const query = document.getElementById("search")?.value.trim().toLowerCase();
+    const carList = document.querySelector('.car-list');
+    const loading = document.getElementById('loading');
+
+    if (!carList || !query) {
+        carsLoaded = false;
+        loadCars();
+        return;
+    }
+
+    try {
+        isSearching = true;
+        if (loading) loading.style.display = 'block';
+
+        const cars = await api.cars.search(query);
+        if (loading) loading.style.display = 'none';
+
+        if (cars.length === 0) {
+            carList.innerHTML = `<p>No cars found matching "${query}".</p>`;
+            isSearching = false;
+            return;
+        }
+
+        carList.innerHTML = cars.map(car => `
+            <div class="car-card">
+                <img src="${car.imageUrl || car.imagePath}" 
+                     alt="${car.title}" 
+                     onerror="this.src='./assets/vehicle-images/toyota-vitz/front.jpg';">
+                <h3>${car.title}</h3>
+                <p>KES ${car.pricePerDay}/day</p>
+                <p class="car-description">${car.description}</p>
+                <button class="book-btn" data-car-id="${car.id}" 
+                        ${!car.available ? 'disabled' : ''}>
+                  ${car.available ? 'Book Now' : 'Not Available'}
+                </button>
+            </div>
+        `).join('');
+
+        isSearching = false;
+
+    } catch (err) {
+        console.error('Search failed:', err);
+        if (loading) loading.style.display = 'none';
+        carList.innerHTML = '<p>Search failed. Please try again.</p>';
+        isSearching = false;
+    }
+}
+
+// Initialize everything once
+document.addEventListener('DOMContentLoaded', () => {
+    // Setup login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // Setup registration form
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegistration);
+    }
+
+    // Load cars only once
+    const carList = document.querySelector('.car-list');
+    if (carList && !carsLoaded) {
+        loadCars();
+    }
+
+    // Setup search button
+    const searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            searchCar();
+        });
+    }
+
+    // Allow Enter key for search
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchCar();
+            }
+        });
+    }
+}, { once: true });
