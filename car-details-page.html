@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Details</title>
     <link rel="stylesheet" href="styles.css">
-    <script defer type="module" src="testpage2.js"></script>
+    <script defer type="module" src="car-details-page.js"></script>
 </head>
 <body>
     <header>
@@ -37,10 +37,19 @@
         <div class="car-info">
             <p><strong>Price Per Day:</strong> <span id="car-price"></span></p>
             <p><strong>Description:</strong> <span id="car-description"></span></p>
-            <a href="request-quote-page.html">
--                   <button>Request Quote</button>
--           </a>
-+           <button id="request-quote-btn" type="button">Request Quote</button>
+            <button class="open-btn" onclick="openPopup()">Request Quote</button>
+
+            <div class="popup-overlay" id="popupOverlay" onclick="closePopupOnOverlay(event)">
+                <div class="popup" id="popup">
+                    <div class="popup-header" id="popupHeader">
+                        <div class="popup-title">My Popup Window</div>
+                        <button class="control-btn" onclick="closePopup()" title="Close">×</button>
+                    </div>
+                    <div class="popup-content">
+                        <iframe class="popup-iframe" id="popupIframe" src="request-quote-page.html"></iframe>
+                    </div>
+                </div>
+            </div>
             <p style="font-size: smaller;">Quotes are calculated instantly, No waiting!</p>
         </div>
     </section>

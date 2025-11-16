@@ -102,17 +102,3 @@ function populateCarDetails(car) {
     // Initialize slideshow after images are loaded
     showSlides(slideIndex);
 }
-
-// Opens a small popup window. Browsers won't allow programmatic minimize.
-+       document.getElementById('request-quote-btn').addEventListener('click', function (e) {
-+           e.preventDefault();
-+           const url = 'request-quote-page.html';
-+           const features = 'width=480,height=360,toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=yes';
-+           const win = window.open(url, 'requestQuotePopup', features);
-+           if (!win) {
-+               alert('Popup blocked. Please allow popups for this site to open the quote window.');
-+               return;
-+           }
-+           // Attempt to move focus away — cannot minimize programmatically
-+           try { win.focus(); } catch (err) {}
-+       });
