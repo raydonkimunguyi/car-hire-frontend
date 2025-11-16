@@ -9,10 +9,22 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h2>Add New Car</h2>
+        <h2 id="add-car-header">Add New Car</h2>
         <form method="post" enctype="multipart/form-data" class="shadow p-4 bg-white rounded">
             <div class="mb-3">
                 <label class="form-label">Car Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Transimission Type</label>
+                <select name="transmission" class="form-select" required>
+                    <option value="" disabled selected>Is it Manual or Automatic?</option>
+                    <option value="Automatic">Automatic</option>
+                    <option value="Manual">Manual</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Fuel Type</label>
                 <input type="text" name="name" class="form-control" required>
             </div>
             <div class="mb-3">
@@ -24,7 +36,16 @@
                 <textarea name="description" class="form-control" required></textarea>
             </div>
             <div class="mb-3">
-                <label class="form-label">Car Image</label>
+                <label class="form-label">Front View</label>
+                <input type="file" name="image" class="form-control" required>
+                
+                <label class="form-label">Rear view</label>
+                <input type="file" name="image" class="form-control" required>
+                
+                <label class="form-label">Side View</label>
+                <input type="file" name="image" class="form-control" required>
+                
+                <label class="form-label">Interior View</label>
                 <input type="file" name="image" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary w-100">Add Car</button>

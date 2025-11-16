@@ -14,7 +14,6 @@
             <h2>Admin Panel</h2>
             <ul>
                 <li><a href="admin_dashboard.php">Dashboard</a></li>
-                <li><a href="add_car.html">Add New Car</a></li>
                 <li><a href="logout.php">Logout</a></li>
             </ul>
         </nav>
@@ -22,7 +21,16 @@
         <!-- Main Content -->
         <div class="main-content">
             <h2>Manage Car Listings</h2>
-            <a href="add_car.php" class="btn btn-primary mb-3">+ Add New Car</a>
+            <button id="openModal">+Add New Car</button>
+
+            <!-- Modal -->
+            <div id="myModal" class="modal">
+                <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="modalBody"></div>
+                </div>
+            </div>
+        </div>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -50,5 +58,6 @@
             </table>
         </div>
     </div>
+    <script type="module" src="admin-dashboard.js"></script>
 </body>
 </html>
