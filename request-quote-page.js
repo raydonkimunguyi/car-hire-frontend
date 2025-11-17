@@ -94,5 +94,3 @@ document.getElementById('quoteForm').addEventListener('submit', async function(e
     showPopupMessage(err.message || 'Failed to submit booking', true);
   }
 });
-
-document.addEventListener('DOMContentLoaded', initQuotePage);

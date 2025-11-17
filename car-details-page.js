@@ -102,3 +102,68 @@ function populateCarDetails(car) {
     // Initialize slideshow after images are loaded
     showSlides(slideIndex);
 }
+
+//Popup modal for request quote form
+
+const modal = document.getElementById('myModal');
+const btn = document.getElementById('openModal');
+const span = document.getElementsByClassName('close')[0];
+const modalBody = document.getElementById('modalBody');
+
+// Ensure DOM is ready (script is deferred but be safe)
+document.addEventListener('DOMContentLoaded', () => {
+  if (!modal || !btn || !modalBody) return;
+
+  btn.addEventListener('click', async () => {
+    try {
+      // Load modal CSS for the quote form once
+      if (!document.querySelector('link[data-request-quote-css]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'request-quote-page.css';
+        link.setAttribute('data-request-quote-css', 'true');
+        document.head.appendChild(link);
+      }
+
+      // Fetch the request page and extract the form container only
+      const res = await fetch('request-quote-page.html');
+      const text = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+
+      const fragment = doc.querySelector('.form-container') || doc.querySelector('#quoteForm') || doc.body;
+      modalBody.innerHTML = '';
+      modalBody.appendChild(fragment.cloneNode(true));
+
+      // Show modal as overlay
+      modal.style.display = 'flex';
+      modal.classList.add('open');
+
+      // Dynamically import the module so the form handlers and initialization run
+      // (the module will attach submit handlers to #quoteForm if present)
+      await import('./request-quote-page.js');
+
+      // If page had a car id param, prefill the select inside modal
+      const params = new URLSearchParams(window.location.search);
+      const carId = params.get('id') || params.get('car') || params.get('carId');
+      if (carId) {
+        const select = modalBody.querySelector('select[name="carId"]');
+        if (select) select.value = carId;
+      }
+    } catch (err) {
+      console.error('Failed to open request quote modal:', err);
+    }
+  });
+
+  span?.addEventListener('click', () => {
+    modal.style.display = 'none';
+    modalBody.innerHTML = '';
+  });
+
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+      modalBody.innerHTML = '';
+    }
+  });
+});
